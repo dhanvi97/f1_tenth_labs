@@ -1,3 +1,3 @@
 #!/bin/bash
 xhost +local:docker
-docker exec -it auto_jenga bash
+docker exec -it lab1 bash
