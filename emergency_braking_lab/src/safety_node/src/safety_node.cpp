@@ -2,10 +2,12 @@
 /// CHECK: include needed ROS msg type headers and libraries
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "nav_msgs/msg/odometry.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "ackermann_msgs/msg/ackermann_drive_stamped.hpp"
 #include <vector>
 using std::placeholders::_1;
 float FLOAT_MAX = std::numeric_limits<float>::infinity();
+float TTC_THRESH = 1.75;
 
 
 class Safety : public rclcpp::Node {
@@ -31,11 +33,11 @@ public:
         odom_subscription_ = this->create_subscription<nav_msgs::msg::Odometry>(
             "/ego_racecar/odom", 1, std::bind(&Safety::drive_callback, this, _1));
         ackermann_publisher_ = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("/drive", 1);
-        
     }
 
 private:
     double speed = 0.0;
+    float slip_angle = 0.0;
     /// TODO: create ROS subscribers and publishers
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr ackermann_publisher_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscription_;
@@ -46,29 +48,81 @@ private:
     {
         /// TODO: update current speed
         this->speed = msg->twist.twist.linear.x;
+        if(msg->twist.twist.linear.y < 0.001){
+            this->slip_angle = 0;
+        } else {
+            this->slip_angle = std::atan(this->speed / msg->twist.twist.linear.y);
+        }
+    }
+
+    std::vector<float> calc_rate_of_range_change(std::vector<float> angles, float slip_angle){
+        std::vector<float> output;
+        int N = int(angles.size());
+        for(int i=0; i < N; i++){
+            float del_r = this->speed*std::cos(angles.at(i) + slip_angle);
+            if(del_r > 0){
+                output.push_back(del_r);
+            } else {
+                output.push_back(0);
+            } 
+        }
+        return output;
+    }
+
+    std::vector<float> calc_ittc_array(std::vector<float> range_rate, std::vector<float> ranges){
+        std::vector<float> output;
+        int N = int(range_rate.size());
+        for(int i=0; i < N; i++){
+            if(range_rate.at(i) > 0 && !std::isinf(ranges.at(i)) && !std::isnan(ranges.at(i))){
+                output.push_back(ranges.at(i)/(range_rate.at(i)));
+            }
+            else {
+                output.push_back(FLOAT_MAX);
+            }
+        }
+        return output;
+    }
+
+    std::tuple<int, float> get_min_ittc(std::vector<float> ittc_array){
+        float min = FLOAT_MAX;
+        int index = 0;
+        int N = int(ittc_array.size());
+        for(int i=0; i < N; i++){
+            if(ittc_array.at(i) < min){
+                min = ittc_array.at(i);
+                index = i;
+            }
+        }
+        return std::make_tuple(index, min);
     }
 
     void scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg) 
     {
         /// TODO: calculate TTC
-        double del_t_seconds = scan_msg->header.stamp.sec - this->prev_scan_msg.header.stamp.sec;
-        std::vector<float> ttc_array(this->prev_scan_msg.ranges.size());
-        for(int i=0; i < int(this->prev_scan_msg.ranges.size()); i++){
-            double del_range = scan_msg->ranges.at(i) - this->prev_scan_msg.ranges.at(i);
-            double range_change_rate = del_range/del_t_seconds;
-            if(range_change_rate < 0){
-                ttc_array[i] = scan_msg->ranges.at(i) / (-1*range_change_rate);
-            }
-            else {
-                ttc_array[i] = FLOAT_MAX;
-            }
+        std::vector<float> angles;
+        float theta = scan_msg->angle_min;
+        bool stop_flag = false;
+        while(theta <= scan_msg->angle_max){
+            angles.push_back(theta);
+            theta += scan_msg->angle_increment;
         }
+        std::vector<float> del_r = calc_rate_of_range_change(angles, this->slip_angle);
+        std::vector<float> ittc_array = calc_ittc_array(del_r, scan_msg->ranges);
+        std::tuple<int, float> min_ittc = get_min_ittc(ittc_array);
         /// TODO: publish drive/brake message
+        if(std::isinf(std::get<1>(min_ittc))) { 
+            stop_flag = false;
+        } else if(std::get<1>(min_ittc) < TTC_THRESH) {
+            stop_flag = true;
+        }
+
+        if(stop_flag){
+            auto drive_ack_msg = ackermann_msgs::msg::AckermannDriveStamped();
+            drive_ack_msg.header.stamp = this->now();
+            drive_ack_msg.drive.speed = 0.0;
+            this->ackermann_publisher_->publish(drive_ack_msg);
+        }
     }
-
-
-
-
 
 };
 int main(int argc, char ** argv) {
