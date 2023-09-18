@@ -37,7 +37,7 @@ public:
 
 private:
     double speed = 0.0;
-    float gcycfslip_angle = 0.0;
+    float slip_angle = 0.0;
     /// TODO: create ROS subscribers and publishers
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr ackermann_publisher_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscription_;
