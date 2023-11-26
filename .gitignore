@@ -1,4 +1,8 @@
 f1tenth_gym_ros/
 .vscode/
-.mp4
-.zip
+*.mp4
+*.zip
+.ipynb_checkpoints/
+vision_lab/yolo_dataset/
+*.pdf
+mpc_lab/mpc/data/*.bag/
