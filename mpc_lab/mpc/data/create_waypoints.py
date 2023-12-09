@@ -72,8 +72,7 @@ plt.show()
 # plt.plot(t_array, velocity)
 # plt.show()
 
-f = open('atrium_waypoints.csv', 'w')
+f = open('waypoints.csv', 'w')
 for i in range(interpolated_points.shape[0]):
     f.write(str(round(interpolated_points[i, 0], 3)) + ',' + str(round(interpolated_points[i, 1], 3)) + ',' + str(round(theta[i], 3)) +  '\n')
 f.close()
-

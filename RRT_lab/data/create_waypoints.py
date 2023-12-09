@@ -19,7 +19,7 @@ f.close()
 # interpolate between waypoints by 100 points using np.linspace
 # save the interpolated waypoints to a csv file
 
-f = open('atrium_interpolated.csv', 'w')
+f = open('interpolated.csv', 'w')
 
 for i in range(waypoints.shape[0]-1):
     x = np.linspace(waypoints[i,0], waypoints[i+1,0], 100)

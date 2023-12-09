@@ -39,7 +39,7 @@ private:
     ros::NodeHandle n;
 
     // The transformation frames used
-    std::string map_frame, base_frame, scan_frame;
+    std::string map_frame, base_frame, scan_frame, robot_frame;
 
     // obstacle states (1D index) and parameters
     std::vector<int> added_obs;
@@ -134,7 +134,11 @@ public:
         n = ros::NodeHandle("~");
 
         // Initialize car state and driving commands
-        state = {.x=0, .y=0, .theta=0, .velocity=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        double x0, y0, theta0;
+        n.getParam("init_x", x0);
+        n.getParam("init_y", y0);
+        n.getParam("init_theta", theta0);
+        state = {.x=x0, .y=y0, .theta=theta0, .velocity=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel = 0.0;
         steer_angle_vel = 0.0;
         desired_speed = 0.0;
@@ -158,8 +162,12 @@ public:
 
         // Get the transformation frame names
         n.getParam("map_frame", map_frame);
+        n.getParam("robot_frame", robot_frame);
+        
         n.getParam("base_frame", base_frame);
         n.getParam("scan_frame", scan_frame);
+        base_frame = robot_frame + "/" + base_frame;
+        scan_frame = robot_frame + "/" + scan_frame;
 
         // Fetch the car parameters
         int scan_beams;
@@ -659,11 +667,11 @@ public:
             ts_wheel.transform.rotation.z = quat_wheel.z();
             ts_wheel.transform.rotation.w = quat_wheel.w();
             ts_wheel.header.stamp = timestamp;
-            ts_wheel.header.frame_id = "front_left_hinge";
-            ts_wheel.child_frame_id = "front_left_wheel";
+            ts_wheel.header.frame_id = this->robot_frame + "/front_left_hinge";
+            ts_wheel.child_frame_id = this->robot_frame + "/front_left_wheel";
             br.sendTransform(ts_wheel);
-            ts_wheel.header.frame_id = "front_right_hinge";
-            ts_wheel.child_frame_id = "front_right_wheel";
+            ts_wheel.header.frame_id = this->robot_frame + "/front_right_hinge";
+            ts_wheel.child_frame_id = this->robot_frame + "/front_right_wheel";
             br.sendTransform(ts_wheel);
         }
 

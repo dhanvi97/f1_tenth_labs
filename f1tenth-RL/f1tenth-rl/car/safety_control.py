@@ -1,4 +1,5 @@
-import rospy
+import rclpy
+from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 
@@ -19,8 +20,9 @@ USE_TTC_REAL_CAR = True
 ONLY_EXTERNAL_BARRIER = False
 EXTERNAL_BARRIER_THRESHOLD = 2.73
 
-class SafetyControl():
+class SafetyControl(Node):
     def __init__(self, drive, sensors, is_simulator=False):
+        super().__init__('safety_control')
         self.emergency_brake = False
         self.drive = drive
         self.sensors = sensors
@@ -75,17 +77,11 @@ if __name__ == '__main__':
     parser.add_argument("--simulator", action='store_true', help="to set the use of the simulator")
     args = parser.parse_args()
 
-    rospy.init_node('safety_control_test')
+    rclpy.init('safety_control_test')
     sensors = Sensors(args.simulator)
     drive = Drive(sensors, args.simulator)
     safety_control = SafetyControl(drive, sensors, args.simulator)
-    time.sleep(0.5)
-    while not safety_control.emergency_brake:
-        safety_control.drive.forward()
-        time.sleep(0.01)
-    safety_control.drive.stop()
-    safety_control.unlock_brake()
-    safety_control.sensors.lidar_subscriber.unregister()
-    print("safe_brake! exiting..")
+    safety_control.main()
+    
   
 

@@ -3,7 +3,8 @@ import os
 import random
 import time
 
-import rospy
+import rclpy
+from rclpy.node import Node
 
 from state import State
 from car.car_control import Drive
@@ -20,13 +21,13 @@ LIDAR_DISTANCE_WEIGHT = 0.01
 VELOCITY_NORMALIZATION = 0.3 # normalize the velocity between 0 and 1 (e.g. max velocity = 1.8 => 1.8*0.55 =~ 1)
 REWARD_SCALING = 0.09 # scale the velocity rewards between [0, REWARD_SCALING]. I.e. at max velocity the reward is REWARD_SCALING
 
-class CarEnv:
+class CarEnv(Node):
     
     def __init__(self, args):
+        super().__init__('rl_driver')
         self.history_length = args.history_length
         self.is_simulator = args.simulator
         self.add_velocity = args.add_velocity
-        rospy.init_node('rl_driver')
         self.sensors = Sensors(is_simulator=args.simulator, use_back_sensors=args.use_back_sensors)
         self.control = Drive(self.sensors, is_simulator=args.simulator)
         self.safety_control = SafetyControl(self.control, self.sensors, is_simulator=args.simulator)

@@ -39,7 +39,7 @@ RRT::RRT(): rclcpp::Node("rrt_node"), gen((std::random_device())()) {
     // The car frame is centered at the rear axle, x is forward, y is left
     // center of grid hieght and left most column represents car position
     // make the grid all zeros
-    readCSV("/home/ros_ws/src/lab6_pkg/data/atrium_waypoints.csv");
+    readCSV("/home/ros_ws/src/lab6_pkg/data/waypoints.csv");
     this->lookahead_distance = 2.0;
     this->occupancy_resolution = 0.05;
     this->max_expansion_dist = 1.0;
@@ -100,13 +100,13 @@ void RRT::scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_m
             this->dynamic_obstacle++;
         }
     }
-    RCLCPP_INFO(rclcpp::get_logger("RRT"), "Dynamic obstacle: %d", this->dynamic_obstacle);
+    // RCLCPP_INFO(rclcpp::get_logger("RRT"), "Dynamic obstacle: %d", this->dynamic_obstacle);
     if(this->dynamic_obstacle > 0){
-        this->lookahead_distance = 2.5;
+        this->lookahead_distance = 3.0;
         this->max_expansion_dist = 0.5;
         this->occupancy_grid = vector<vector<int>>(int(lookahead_distance/occupancy_resolution), vector<int>(int(lookahead_distance/occupancy_resolution), 0));
     } else {
-        this->lookahead_distance = 2.5;
+        this->lookahead_distance = 3.0;
         this->max_expansion_dist = 0.5;
         this->occupancy_grid = vector<vector<int>>(int(lookahead_distance/occupancy_resolution), vector<int>(int(lookahead_distance/occupancy_resolution), 0));
     }
@@ -220,7 +220,7 @@ tuple<float , float> RRT::find_nearest_free_space(geometry_msgs::msg::Pose trans
             if(this->occupancy_grid.at(i).at(j) == 1) { continue; }
             float x_p = (j - int(this->occupancy_grid.size())/2)*this->occupancy_resolution;
             float y_p = (i - int(this->occupancy_grid.size())/2)*this->occupancy_resolution;
-            float dist = 2*sqrt(pow(x_p - float(x), 2) + pow(y_p - float(y), 2)) - 0.01*x_p + 0.5*fabs(y_p);
+            float dist = 1.5*sqrt(pow(x_p - float(x), 2) + pow(y_p - float(y), 2)) - x_p + 0.75*fabs(y_p);
             if(dist < min_dist){
                 min_dist = dist;
                 nearest_free_space = make_tuple(x_p, y_p);
@@ -390,6 +390,7 @@ void RRT::pose_callback(const nav_msgs::msg::Odometry::ConstSharedPtr pose_msg) 
     if(iter < 2500){
         // RCLCPP_INFO(rclcpp::get_logger("RRT"), "Path found in %d iterations", iter);
         path = find_path(tree, tree.back());
+        RCLCPP_INFO(rclcpp::get_logger("RRT"), "Found path of length %d", int(path.size()));
     } else {
         std::vector<double> goal_point = {this->goal_x, this->goal_y};
         int alternate_path_end = nearest(tree, goal_point);

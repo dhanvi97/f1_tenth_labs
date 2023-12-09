@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+
+  <group ns="racecar1">
+  <arg name="racecar_xacro" default="$(find f1tenth_simulator)/racecar1.xacro"/>
+  <param name="robot_description" command="xacro --inorder '$(arg racecar_xacro)'"/>
+  <param name="tf_prefix" value="racecar1"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  </group>
+
+   <group ns="racecar2"> 
+  <arg name="racecar_xacro" default="$(find f1tenth_simulator)/racecar2.xacro"/>
+  <param name="robot_description" command="xacro --inorder '$(arg racecar_xacro)'"/>
+  <param name="tf_prefix" value="racecar2"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  </group> 
+
+</launch>

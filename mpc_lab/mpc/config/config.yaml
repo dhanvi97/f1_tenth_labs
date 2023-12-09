@@ -1,26 +1,26 @@
 # Operation mode parameters
 operation_mode: "simulation"
 path_source: "planner"  # "csv" or "planner"
-path_filename: "/home/ros_ws/src/mpc/data/atrium_waypoints.csv"
+path_filename: "/home/ros_ws/src/mpc/data/waypoints.csv"
 path_topic: "/rrt_path"
 
 # MPC Controller Parameters
 N: 10
 dt: 0.1
 dtk: 0.1
-v_min: 0.0
-v_max: 1.5
+v_min: 1.5
+v_max: 3.0
 delta_min: -0.41
 delta_max: 0.41
 Q:
-  - 1
-  - 1
-  - 1
+  - 1.5
+  - 1.5
+  - 1.5
 R:
-  - 0.75
+  - 0.55
   - 0.2
 QN:
-  - 10
-  - 10
-  - 10
+  - 40
+  - 40
+  - 40
 wheelbase: 0.33

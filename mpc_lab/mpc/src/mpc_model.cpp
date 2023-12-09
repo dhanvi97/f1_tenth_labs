@@ -128,8 +128,8 @@ tuple<double,  double, vector<tuple<double, double>>> MPCSolver::solve(CarState&
     // Setting solver options
     casadi::Dict opts;
     opts["ipopt.print_level"] = 0;
-    // opts["print_time"] = true;
-    opts["ipopt.mu_strategy"] = "adaptive";
+    opts["print_time"] = false;
+    // opts["ipopt.mu_strategy"] = "adaptive";
     // opts["ipopt.max_iter"] = 100;
     // opts["ipopt.tol"] = 1e-5;
     opts["ipopt.warm_start_init_point"] = "yes";

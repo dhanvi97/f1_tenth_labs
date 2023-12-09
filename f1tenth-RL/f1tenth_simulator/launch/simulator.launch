@@ -4,16 +4,20 @@
   <node pkg="joy" name="joy_node" type="joy_node"/>
 
   <!-- Launch a map from the maps folder-->
-  <arg name="map" default="$(find f1tenth_simulator)/maps/f1_aut.yaml"/>
+  <arg name="map" default="$(find f1tenth_simulator)/maps/Sochi_map.yaml"/>
   <node pkg="map_server" name="map_server" type="map_server" args="$(arg map)"/>
 
   <!-- Launch the racecar model -->
   <include file="$(find f1tenth_simulator)/launch/racecar_model.launch"/>
 
   <!-- Begin the simulator with the parameters from params.yaml -->
-  <node pkg="f1tenth_simulator" name="f1tenth_simulator" type="simulator" output="screen">
+  <node pkg="f1tenth_simulator" name="ego_f1tenth_simulator" type="simulator" output="screen">
     <rosparam command="load" file="$(find f1tenth_simulator)/params.yaml"/>
   </node>
+
+  <node pkg="f1tenth_simulator" name="opp_f1tenth_simulator" type="simulator" output="screen">
+    <rosparam command="load" file="$(find f1tenth_simulator)/params2.yaml"/>
+  </node> 
 
   <!-- Launch the mux node with the parameters from params.yaml -->
   <node pkg="f1tenth_simulator" name="mux_controller" type="mux" output="screen">
@@ -21,7 +25,7 @@
   </node>
 
   <!-- Launch the behavior controller node with the parameters from params.yaml -->
-  <node pkg="f1tenth_simulator" name="behavior_controller" type="behavior_controller" output="screen">
+  <node pkg="f1tenth_simulator" name="ego_behavior_controller" type="behavior_controller" output="screen">
     <rosparam command="load" file="$(find f1tenth_simulator)/params.yaml"/>
   </node>
 

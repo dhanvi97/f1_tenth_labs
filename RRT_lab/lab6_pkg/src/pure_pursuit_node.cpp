@@ -93,7 +93,7 @@ public:
         // } else {
         //     drive_msg.drive.speed = 1.5;
         // }
-        drive_msg.drive.speed = 0.5;
+        drive_msg.drive.speed = 0.0;
         drive_msg.drive.steering_angle = steering_angle;
         this->drive_publisher->publish(drive_msg);
         // publish_path();

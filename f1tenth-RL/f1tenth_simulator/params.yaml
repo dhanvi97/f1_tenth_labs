@@ -90,23 +90,23 @@ obstacle_size: 2
 
 # The names of topics to listen and publish to
 joy_topic: "/joy"
-drive_topic: "/drive"
+drive_topic: "/ego/drive"
 map_topic: "/map"
 distance_transform_topic: "/dt"
-scan_topic: "/scan"
-pose_topic: "/pose"
-ground_truth_pose_topic: "/gt_pose"
-odom_topic: "/odom"
-imu_topic: "/imu"
-pose_rviz_topic: "/initialpose"
-keyboard_topic: "/key"
-brake_bool_topic: "/brake_bool"
+scan_topic: "/ego/scan"
+pose_topic: "/ego/pose"
+ground_truth_pose_topic: "/ego/gt_pose"
+odom_topic: "/ego/odom"
+imu_topic: "/ego/imu"
+pose_rviz_topic: "/ego/initialpose"
+keyboard_topic: "/ego/key"
+brake_bool_topic: "/ego/brake_bool"
 mux_topic: "/mux"
 
 # Topic names of various drive channels
-rand_drive_topic: "/rand_drive"
-brake_drive_topic: "/brake"
-nav_drive_topic: "/nav"
+rand_drive_topic: "/ego/rand_drive"
+brake_drive_topic: "/ego/brake"
+nav_drive_topic: "/ego/nav"
 # **Add name for new planning method here**
 new_drive_topic: "/new_drive"
 
@@ -117,6 +117,11 @@ collision_file: "collision_file"
 map_frame: "map"
 base_frame: "base_link"
 scan_frame: "laser"
+robot_frame: "racecar1"
+
+init_x: 0.0
+init_y: 0.0
+init_theta: 0.85
 
 broadcast_transform: true
 publish_ground_truth_pose: true

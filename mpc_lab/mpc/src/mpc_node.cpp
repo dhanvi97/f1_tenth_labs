@@ -20,6 +20,7 @@ private:
     bool path_updated {false};
     float steer {0.0};
     float vel {1.5};
+    int stuck_count {0};
 public:
     MPC() : Node("mpc_node")
     {
@@ -54,11 +55,17 @@ public:
             RCLCPP_INFO(this->get_logger(), "Received empty path");
             this->vel = 0.0;
             // this->steer = 0.0;
+            this->stuck_count += 1;
         } else {
+            this->stuck_count = 0;
             this->mpc_solver.get_waypoints(this->race_line);
             control = this->mpc_solver.solve(this->car_state_, this->steer, this->vel);
             this->vel = get<1>(control);
             this->steer = get<0>(control);
+        }
+        if(this->stuck_count > 10){
+            this->vel = -0.5;
+            this->steer = 0.0;
         }
         ackermann_msgs::msg::AckermannDriveStamped drive_msg;
         drive_msg.header.stamp = this->now();
@@ -71,7 +78,6 @@ public:
         plan_publish(plan);
 
     }
-
     float get_robot_yaw(nav_msgs::msg::Odometry robot_odom){
         tf2::Quaternion q(
             robot_odom.pose.pose.orientation.x,

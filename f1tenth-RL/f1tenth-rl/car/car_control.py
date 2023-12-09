@@ -1,6 +1,6 @@
-import rospy
+import rclpy
+from rclpy.node import Node
 from ackermann_msgs.msg import AckermannDriveStamped
-from rospy.exceptions import ROSException
 
 from threading import Thread
 import time
@@ -33,8 +33,9 @@ USE_RESET_INSTEAD_OF_BACKWARDS_SIM = False
 
 MIN_SPEED_REDUCTION = 5
 
-class Drive():
+class Drive(Node):
     def __init__(self, sensors, is_simulator=False):
+        super().__init__('drive')
         self.is_simulator = is_simulator
         if not is_simulator:
             topic = "/vesc/high_level/ackermann_cmd_mux/input/nav_0"
@@ -46,16 +47,18 @@ class Drive():
             self.backward_seconds = BACKWARD_SECONDS
         else:
             topic = "/drive"
-            max_steering = 0.4189
+            max_steering = 0.34
             self.max_speed_reduction = MAX_SPEED_REDUCTION_SIM
             self.steering_speed_reduction = STEERING_SPEED_REDUCTION_SIM
             self.backward_speed_reduction = BACKWARD_SPEED_REDUCTION_SIM
             self.lightly_steering_reduction = LIGHTLY_STEERING_REDUCTION_SIM
             self.backward_seconds = BACKWARD_SECONDS_SIM
-            self.reset_publisher = rospy.Publisher("/pose", PoseStamped, queue_size=0)
-        self.max_speed = rospy.get_param("max_speed", 5)
-        self.max_steering = rospy.get_param("max_steering", max_steering)
-        self.drive_publisher = rospy.Publisher(topic, AckermannDriveStamped, queue_size=0)
+            self.reset_publisher = self.create_publisher(PoseStamped, "/pose", queue_size=10)
+        self.declare_parameter("max_speed", rclpy.Parameter.Type.DOUBLE)
+        self.declare_parameter("max_steering", rclpy.Parameter.Type.DOUBLE)
+        self.max_speed = self.get_parameter("max_speed", 5)
+        self.max_steering = self.get_parameter("max_steering", max_steering)
+        self.drive_publisher = self.create_publisher(AckermannDriveStamped, topic, queue_size=10)
         self.sensors = sensors
         self.stop()
         process = Thread(target=self.drive_command_runner)
@@ -98,13 +101,7 @@ class Drive():
 
     def drive_command_runner(self):
         while True:
-            try:
-                self.drive_publisher.publish(self.ack_msg)
-            except ROSException as e:
-                if str(e) == "publish() to a closed topic":
-                    pass
-                else:
-                    raise e
+            self.drive_publisher.publish(self.ack_msg)
             time.sleep(PUBLISHER_WAIT)
 
     def backward_until_obstacle(self):
@@ -130,35 +127,36 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     run_seconds = 0.3
-    rospy.init_node('drive_test')
+    rclpy.init(args=None)
     drive = Drive(args.simulator)
-    while True:
-        print("Write command")
-        cmd = input()
-        start = time.time()
-        if cmd == "w":
-            while time.time() - start < run_seconds:
-                drive.forward()
-        if cmd == "s":
-            while time.time() - start < run_seconds:
-                drive.backward()
-        if cmd == "a":
-            while time.time() - start < run_seconds:
-                drive.lightly_left()
-        if cmd == "d":
-            while time.time() - start < run_seconds:
-                drive.lightly_right()
-        if cmd == "aa":
-            while time.time() - start < run_seconds:
-                drive.left()
-        if cmd == "dd":
-            while time.time() - start < run_seconds:
-                drive.right()
-        if cmd == " ":
-            while time.time() - start < run_seconds:
-                drive.stop()
-        if cmd == "buo":
-            drive.backward_until_obstacle()
-        if cmd == "q":
-            exit()
+    rclpy.spin(drive)
+    # while True:
+    #     print("Write command")
+    #     cmd = input()
+    #     start = time.time()
+    #     if cmd == "w":
+    #         while time.time() - start < run_seconds:
+    #             drive.forward()
+    #     if cmd == "s":
+    #         while time.time() - start < run_seconds:
+    #             drive.backward()
+    #     if cmd == "a":
+    #         while time.time() - start < run_seconds:
+    #             drive.lightly_left()
+    #     if cmd == "d":
+    #         while time.time() - start < run_seconds:
+    #             drive.lightly_right()
+    #     if cmd == "aa":
+    #         while time.time() - start < run_seconds:
+    #             drive.left()
+    #     if cmd == "dd":
+    #         while time.time() - start < run_seconds:
+    #             drive.right()
+    #     if cmd == " ":
+    #         while time.time() - start < run_seconds:
+    #             drive.stop()
+    #     if cmd == "buo":
+    #         drive.backward_until_obstacle()
+    #     if cmd == "q":
+    #         exit()
 

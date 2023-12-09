@@ -1,4 +1,5 @@
-import rospy
+import rclpy
+from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
@@ -8,8 +9,9 @@ import math
 import argparse
 import subprocess
 
-class Sensors():
+class Sensors(Node):
     def __init__(self, is_simulator=False, use_back_sensors=False):
+        super().__init__('sensors')
         self.is_simulator = is_simulator
         self.use_back_sensors = use_back_sensors
         self.custom_lidar_callback = None
@@ -18,10 +20,10 @@ class Sensors():
         if not is_simulator:
             odom_topic = "/vesc/odom"
         else:
-            odom_topic = "/odom"
-        self.lidar_subscriber = rospy.Subscriber("scan", LaserScan, self.lidar_callback)
-        self.odom_subscriber = rospy.Subscriber(odom_topic, Odometry, self.odometry_callback)
-        self.imu_subscriber = rospy.Subscriber("imu", Imu, self.imu_callback)
+            odom_topic = "/ego/odom"
+        self.lidar_subscriber = self.create_subscription(LaserScan,"/scan",self.lidar_callback, 10)
+        self.odom_subscriber = self.create_subscription(Odometry, odom_topic, self.odometry_callback, 10)
+        self.imu_subscriber = self.create_subscription(Imu, "/imu", self.imu_callback)
 
         if not is_simulator:
             if use_back_sensors:
@@ -84,14 +86,15 @@ if __name__ == '__main__':
     parser.add_argument("--simulator", action='store_true', help="to set the use of the simulator")
     args = parser.parse_args()
 
-    rospy.init_node('sensors_test')
+    rclpy.init(args=None)
     sensor = Sensors(args.simulator)
-    time.sleep(1)
-    while True:
-        print("######################################")
-        print(sensor.lidar_data)
-        print(sensor.odometry)
-        print(sensor.get_car_linear_velocity())
-        if not args.simulator:
-            print(sensor.back_obstacle())
-        time.sleep(5)
+    rclpy.spin(sensor)
+    # time.sleep(1)
+    # while True:
+    #     print("######################################")
+    #     print(sensor.lidar_data)
+    #     print(sensor.odometry)
+    #     print(sensor.get_car_linear_velocity())
+    #     if not args.simulator:
+    #         print(sensor.back_obstacle())
+    #     time.sleep(5)

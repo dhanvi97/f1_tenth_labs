@@ -97,6 +97,7 @@ environment = CarEnv(args)
 replay_memory = replay.ReplayMemory(base_output_dir, args)
 dqn = dqn.DeepQNetwork(environment.get_num_actions(), environment.get_state_size(),
                         replay_memory, base_output_dir, tensorboard_dir, args)
+dqn.behavior_net.load_weights(filepath='run-out-2023-12-06-06-33-43/models/model_526.h5')
 if args.gamepad is True:
     gamepad = Gamepad()
 if args.show_monitor is True:
@@ -151,6 +152,7 @@ def run_epoch(min_epoch_steps, eval_with_epsilon=None):
     global episode_eval_reward_list
     global first_train
     is_training = True if eval_with_epsilon is None else False
+    is_training = False
     step_start = environment.get_step_number()
     start_game_number = environment.get_game_number()
     epoch_total_score = 0
@@ -186,6 +188,7 @@ def run_epoch(min_epoch_steps, eval_with_epsilon=None):
                     if gamepad.is_autonomous_mode() or stop:
                         action = 0
             else:
+                epsilon = 0
                 if random.random() < epsilon:
                     action = random.randrange(environment.get_num_actions())
                 else:
